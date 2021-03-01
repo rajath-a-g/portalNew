@@ -24,9 +24,58 @@ class OverlaysView extends React.Component {
     }
   }
 
-  componentDidMount() {
+  async getOverlaysData(intervalId) {
+    var url = 'http://' + Config.ip + ':' + Config.port + '/overlays?interval=' + intervalId
+    console.log(url);
 
-    getOverlaysData();
+    //let res = await fetch(url);
+    
+    fetch(url).then(res => {
+      console.log(res)
+      return res.json()})
+    .then(res => {
+      if(res.status == 502) {
+        //connection timeout error
+        console.log("waiting for new data");
+        this.getOverlaysData(intervalId);
+      }else{
+        //Got response, display the data
+        console.log("got response");
+        this.setState({overlays : new Overlays(res)});
+        intervalId = res[0]._id;
+        this.getOverlaysData(intervalId);
+      }
+    }).catch(err => {
+      console.log('error has been occured on fetch overlay process.' + err);
+    })
+
+
+    // if (res.status == 502) {
+    //   //connection timeout error
+    //   console.log("waiting for new data");
+    //   await this.getOverlaysData(intervalId);
+    // }else if (res.status != 200) {
+    //   //error from response
+    //   console.log('error has been occered on fetch overlay process.');
+    //   await this.getOverlaysData(intervalId);
+    // }else{
+    //   //Got response, display the data
+    //   res = res.json();
+    //   //console.log(res);
+    //   res.then((overlays) => {
+    //     return new Overlays(overlays) // create overlay object that contain all overlays and its details.
+    //   }).then((overlays) => { this.setState({ overlays: overlays }) })
+    //   intervalId = Object.keys(res[0])[0];
+    //   console.log("stored intervalId:"+intervalId);
+    //   this.setState({overlays : new Overlays(res)});
+    //   await this.getOverlaysData();
+    // }
+  }
+
+  componentDidMount() {
+    console.log("within compmount");
+    this.getOverlaysData();
+    
     // URL for REST API.
     
     //var url = allowOrigin + 'http://67.58.53.58:5000/IPOP/overlays?interval=2020-04-29T21:28:42&current_state=True'
@@ -41,27 +90,6 @@ class OverlaysView extends React.Component {
     //   .catch(() => {
     //     //console.log('error has been occered on fetch overlay process.')
     //   })
-  }
-
-  async getOverlaysData(intervalId) {
-    var url = 'http://' + Config.ip + ':' + Config.port + '/overlays?interval=' + intervalId
-    let res = await fetch(url);
-
-    if (res.status == 502) {
-      //connection timeout error
-      await this.getOverlaysData(intervalId);
-    }else if (res.status != 200) {
-      //error from response
-      console.log('error has been occered on fetch overlay process.');
-      await this.getOverlaysData(intervalId);
-    }else{
-      //Got response, display the data
-      res = res.json();
-      intervalId = Object.keys(res)[0];
-      console.log("stored intervalId:"+intervalId);
-      this.setState({overlays : new Overlays(res)});
-      await this.getOverlaysData();
-    }
   }
 
   // toggle overlay right panel

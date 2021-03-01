@@ -34,6 +34,11 @@ class MongoDBImpl extends DataBaseInterface {
         // Once an instance is created the db connection is kept until the instance is alive.
         this.connection = mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
         this.dbname = dbname;
+        this.db = mongoose.connection.client;
+    }
+
+    getDb() {
+        return this.db;
     }
 
     /**
@@ -88,7 +93,6 @@ class MongoDBImpl extends DataBaseInterface {
             return tableName.find({ "_id": { $gt: intervalId } }).sort({'_id':1}).limit(1);
         }
         return tableName.find().sort({'_id':-1}).limit(1);
-        //return tableName.find({_id:intervalId});
     }
 
     /**

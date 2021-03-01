@@ -47,16 +47,28 @@ exports.findOverlays = (req, res, dbInstance) => {
 
     dbInstance.getOverlays(overlayModel, intervalId)
     .then(data => {
-      if (!data) {
+      var send = true;
+      //console.log("Data is " + data)
+      if (Object.keys(data).length == 0) {
+        send = false;
         console.log("data not found");
         const pipeline = [{'$match': {'operationType': 'insert'}}];
-        const overlayChangeStream = dbInstance.collection('Overlays').watch(pipeline);
+        //dbInstance.getConnection().db('Evio').collection('Overlays')
+        const overlayChangeStream = dbInstance.getDb().db('Evio').collection('Overlays').watch(pipeline);
         overlayChangeStream.on('change', newData => {
             console.log(newData);
-            data = newData;
+            data = newData.fullDocument;
+            send = true;
         });
       }
-      res.send(data);
+      // if (Object.keys(data).length == 0) {
+      //   data = {"data" : "data"};
+      // }
+      var overlayIntervalId = setInterval(function(){
+        if (send) {
+          res.send(data);
+          clearInterval(overlayIntervalId);
+        }}, 1000)
     })
     .catch(err => {
       res.status(500).send({
